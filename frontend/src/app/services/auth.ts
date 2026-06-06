@@ -2,16 +2,17 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
+import { environment } from '../../environment'; 
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ 
+  providedIn: 'root' 
+})
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
   
-
-private readonly API_URL = 'https://localhost:7146/api/auth';
-
-
+  // Utilisation de l'URL Azure présente dans environment.ts
+  private readonly API_URL = `${environment.apiUrl}/auth`;
 
   login(credentials: any) {
     return this.http.post<any>(`${this.API_URL}/login`, credentials).pipe(
@@ -23,21 +24,21 @@ private readonly API_URL = 'https://localhost:7146/api/auth';
       })
     );
   }
-getUsername(): string {
-  return localStorage.getItem('username') || 'Invité';
-}
+
+  getUsername(): string {
+    return localStorage.getItem('username') || 'Invité';
+  }
+
   isLoggedIn(): boolean {
     return !!localStorage.getItem('token');
   }
 
   logout() {
     localStorage.removeItem('token');
-    this.router.navigate(['/login']);
+    localStorage.removeItem('username'); 
   }
 
-
-register(user: any) {
-  return this.http.post<any>(`${this.API_URL}/register`, user);
-}
-
+  register(user: any) {
+    return this.http.post<any>(`${this.API_URL}/register`, user);
+  }
 }

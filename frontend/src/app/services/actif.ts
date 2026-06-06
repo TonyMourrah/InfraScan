@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
+import { environment } from '../../environment'; 
 
 export interface ActifRoutier {
   id?: number;
@@ -18,7 +18,8 @@ export interface ActifRoutier {
   providedIn: 'root'
 })
 export class ActifService {
-  private apiUrl = 'https://localhost:7146/api/actifs'; 
+  // Utilisation de l'URL Azure présente dans environment.ts
+  private apiUrl = `${environment.apiUrl}/actifs`; 
 
   constructor(private http: HttpClient) { }
 
@@ -27,19 +28,19 @@ export class ActifService {
   }
 
   getActifById(id: number): Observable<ActifRoutier> {
-    return this.http.get<ActifRoutier>(`${`${this.apiUrl}/${id}`}`);
+    return this.http.get<ActifRoutier>(`${this.apiUrl}/${id}`);
   }
 
   deleteActif(id: number): Observable<void> {
-    return this.http.delete<void>(`${`${this.apiUrl}/${id}`}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-postActif(actif: ActifRoutier): Observable<ActifRoutier> {
-  return this.http.post<ActifRoutier>(this.apiUrl, actif); 
-}
+  postActif(actif: ActifRoutier): Observable<ActifRoutier> {
+    return this.http.post<ActifRoutier>(this.apiUrl, actif); 
+  }
 
   putActif(id: number, actif: ActifRoutier): Observable<void> {
     const payload = { ...actif, id: id }; 
-    return this.http.put<void>(`${`${this.apiUrl}/${id}`}`, payload);
+    return this.http.put<void>(`${this.apiUrl}/${id}`, payload);
   }
 }
