@@ -28,16 +28,17 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              }
+              },
+              "public/staticwebapp.config.json"
             ],
             "styles": [
-  "node_modules/bootstrap/dist/css/bootstrap.min.css",
-  "node_modules/bootstrap-icons/font/bootstrap-icons.css",
-  "src/styles.scss"
-],
-"scripts": [
-  "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
-]
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "node_modules/bootstrap-icons/font/bootstrap-icons.css",
+              "src/styles.scss"
+            ],
+            "scripts": [
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+            ]
           },
           "configurations": {
             "production": {
@@ -46,7 +47,7 @@
                   "type": "initial",
                   "maximumWarning": "2mb",
                   "maximumError": "3mb"
-                },
+                }
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "4kB",
