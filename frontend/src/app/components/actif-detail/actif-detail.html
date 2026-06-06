@@ -1,0 +1,80 @@
+<div class="container mt-5">
+  <div class="mb-4">
+    <a routerLink="/actifs" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-2"></i>Retour au tableau de bord
+    </a>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="text-muted mt-2">Chargement des données de l'infrastructure...</p>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger shadow-sm" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ errorMessage }}
+  </div>
+
+  <div *ngIf="!loading && !errorMessage && actif" class="row g-4">
+    
+    <div class="col-md-5">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body p-4">
+          <span class="badge bg-dark text-uppercase mb-2 px-3 py-2">{{ actif.type }}</span>
+          <h2 class="fw-bold mb-3">{{ actif.nom }}</h2>
+          
+          <hr>
+
+          <div class="mb-3">
+            <label class="text-muted small fw-bold text-uppercase d-block">Emplacement</label>
+            <span class="fs-5"><i class="bi bi-geo-alt text-danger me-2"></i>{{ actif.ville }}, Québec</span>
+          </div>
+
+          <div class="mb-3">
+            <label class="text-muted small fw-bold text-uppercase d-block">Coordonnées GPS</label>
+            <code class="fs-6 text-dark">Lat: {{ actif.latitude }} | Long: {{ actif.longitude }}</code>
+          </div>
+
+          <div class="mb-3">
+            <label class="text-muted small fw-bold text-uppercase d-block">Dernière inspection</label>
+            <span class="fs-6"><i class="bi bi-calendar-event me-2 text-info"></i>{{ actif.derniereInspection | date:'dd MMMM yyyy' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-7">
+      <div class="card shadow-sm border-0 p-4 h-100">
+        <h4 class="fw-bold mb-4">Évaluation de la structure</h4>
+        
+        <div class="p-4 rounded mb-4 bg-light text-center">
+          <h5 class="text-muted mb-2">Indice de Santé Actuel</h5>
+          <div class="display-3 fw-bold" 
+               [ngClass]="{'text-success': actif.etatSante >= 75, 'text-warning': actif.etatSante >= 40 && actif.etatSante < 75, 'text-danger': actif.etatSante < 40}">
+            {{ actif.etatSante }}%
+          </div>
+          
+          <div class="progress mt-3" style="height: 15px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                 [ngClass]="{'bg-success': actif.etatSante >= 75, 'bg-warning': actif.etatSante >= 40 && actif.etatSante < 75, 'bg-danger': actif.etatSante < 40}"
+                 [style.width]="actif.etatSante + '%'"></div>
+          </div>
+        </div>
+
+        <div class="border border-info border-start border-4 p-3 bg-light rounded">
+          <h6 class="fw-bold text-info"><i class="bi bi-info-circle-fill me-2"></i>Note technique d'ingénierie</h6>
+          <p class="small text-muted mb-0" *ngIf="actif.etatSante < 40">
+            Structure en état critique. Des travaux de consolidation d'urgence doivent être planifiés immédiatement sur cet actif routier pour éviter toute défaillance structurelle majeure.
+          </p>
+          <p class="small text-muted mb-0" *ngIf="actif.etatSante >= 40 && actif.etatSante < 75">
+            Usure modérée détectée sur les dalles de béton. Augmenter la fréquence des inspections à 6 mois.
+          </p>
+          <p class="small text-muted mb-0" *ngIf="actif.etatSante >= 75">
+            L'actif ne présente aucun signe de détérioration alarmant. Maintenance préventive standard recommandée.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

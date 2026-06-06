@@ -1,0 +1,205 @@
+<nav class="navbar navbar-dark bg-dark mb-4 shadow-sm">
+  <div class="container">
+    <span class="navbar-brand mb-0 h1">
+      <i class="bi bi-shield-check text-info me-2"></i>InfraScan Pro
+    </span>
+
+    <div class="d-flex align-items-center">
+      <span class="badge rounded-pill bg-secondary me-3 px-3 py-2 d-none d-sm-inline">
+        <i class="bi bi-person-circle me-1"></i> Inspecteur {{ username }}
+      </span>
+
+      <button class="btn btn-outline-danger btn-sm px-3" (click)="deconnexion()">
+        <i class="bi bi-box-arrow-right me-1"></i> Déconnexion
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="row mb-4 g-3">
+    <div class="col-md-3">
+      <div class="card bg-white border-start border-primary border-5 p-3 shadow-sm h-100">
+        <div class="text-muted small fw-bold text-uppercase">Total Actifs</div>
+        <div class="h3 mb-0">{{ totalActifs }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-white border-start border-info border-5 p-3 shadow-sm h-100">
+        <div class="text-muted small fw-bold text-uppercase">Santé Moyenne</div>
+        <div class="h3 mb-0 text-info">{{ moyenneSante }}%</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-white border-start border-danger border-5 p-3 shadow-sm h-100">
+        <div class="text-muted small fw-bold text-uppercase text-danger">Urgences (&lt; 40%)</div>
+        <div class="h3 mb-0 text-danger">{{ interventionsUrgentes }}</div>
+      </div>
+    </div>
+    <div class="col-md-3 d-flex align-items-center justify-content-end">
+      <button class="btn btn-outline-success shadow-sm me-3 h-100 px-3" (click)="exporterCSV()">
+        <i class="bi bi-file-earmark-excel fs-4 d-block"></i>
+        <span class="small fw-bold">EXPORTER</span>
+      </button>
+
+      <button class="btn btn-primary shadow h-100 flex-grow-1 py-3 fw-bold"
+              (click)="preparerAjout()"
+              data-bs-toggle="modal"
+              data-bs-target="#modalAjout">
+        <i class="bi bi-plus-circle me-2"></i> NOUVEL ACTIF
+      </button>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 mb-3">
+    <div class="card-body py-2">
+      <div class="row g-2 align-items-center">
+        <div class="col-md-8">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span>
+            <input type="text"
+                   class="form-control border-0 shadow-none"
+                   placeholder="Rechercher un pont, une ville..."
+                   [(ngModel)]="searchTerm">
+          </div>
+        </div>
+        <div class="col-md-4 border-start">
+          <select class="form-select border-0 shadow-none small" [(ngModel)]="sortOrder">
+            <option value="name">Trier par : Nom (A-Z)</option>
+            <option value="critical">Trier par : Priorité Critique</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0 overflow-hidden">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr class="text-muted text-uppercase small">
+              <th class="ps-4 py-3">ID</th>
+              <th class="py-3">Désignation</th>
+              <th class="py-3">Priorité</th>
+              <th class="py-3">Indice de Santé</th>
+              <th class="text-end pe-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of filteredActifs; track item.id) {
+              <tr class="align-middle">
+                <td class="ps-4 text-muted small">#{{ item.id }}</td>
+                <td>
+                  <a [routerLink]="['/actifs', item.id]" class="fw-bold text-decoration-none text-primary" style="cursor: pointer;">
+                    {{ item.nom }}
+                  </a>
+                  <div class="small text-muted">
+                    <i class="bi bi-geo-alt-fill text-danger small"></i> {{ item.ville }} ({{ item.type }})
+                  </div>
+                </td>
+                <td>
+                  <span class="badge rounded-pill px-3" [ngClass]="getPriorite(item.etatSante).classe">
+                    {{ getPriorite(item.etatSante).texte }}
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="progress flex-grow-1" style="height: 8px; min-width: 100px;">
+                      <div class="progress-bar"
+                           [ngClass]="getPriorite(item.etatSante).classe"
+                           [style.width]="item.etatSante + '%'"></div>
+                    </div>
+                    <span class="ms-3 fw-bold small">{{ item.etatSante }}%</span>
+                  </div>
+                </td>
+                <td class="text-end pe-4">
+                  <button (click)="preparerModification(item)"
+                          class="btn btn-outline-primary btn-sm me-2"
+                          data-bs-toggle="modal"
+                          data-bs-target="#modalAjout">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button (click)="supprimer(item.id, item.nom)" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="text-center py-5">
+                  <i class="bi bi-search text-muted fs-1"></i>
+                  <div class="text-muted mt-2">Aucun actif trouvé.</div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AJOUT / MODIFICATION -->
+<div class="modal fade" id="modalAjout" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header" [ngClass]="modeEdition ? 'bg-warning text-dark' : 'bg-primary text-white'">
+        <h5 class="modal-title fw-bold">
+          <i class="bi" [ngClass]="modeEdition ? 'bi-pencil-square' : 'bi-plus-circle'"></i>
+          {{ modeEdition ? 'Modifier l\'actif #' + idEnEdition : 'Scanner un nouvel actif' }}
+        </h5>
+        <button type="button" class="btn-close" [ngClass]="{'btn-close-white': !modeEdition}" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form #actifForm="ngForm">
+          <div class="mb-3">
+            <label class="form-label fw-bold small">Nom de l'actif</label>
+            <input type="text" class="form-control" name="nom" ngModel required placeholder="ex: Pont de la Concorde">
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold small">Type</label>
+              <select class="form-select" name="type" ngModel="Pont" required>
+                <option value="Pont">Pont</option>
+                <option value="Viaduc">Viaduc</option>
+                <option value="Tunnel">Tunnel</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold small">Ville</label>
+              <input type="text" class="form-control" name="ville" ngModel required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold small">Date d'inspection</label>
+            <input type="date" class="form-control" name="derniereInspection" ngModel required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold small d-flex justify-content-between">
+              État de santé
+              <!-- ← on lit la valeur avec || 0 pour ne jamais afficher undefined -->
+              <span>{{ actifForm.value.etatSante || 0 }}%</span>
+            </label>
+            <!-- ← ngModel="75" force une valeur initiale sur le slider -->
+            <input type="range" class="form-range" name="etatSante" ngModel="75" required min="0" max="100">
+          </div>
+
+          <input type="hidden" name="latitude" ngModel>
+          <input type="hidden" name="longitude" ngModel>
+        </form>
+      </div>
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button"
+                class="btn"
+                [ngClass]="modeEdition ? 'btn-warning' : 'btn-primary'"
+                (click)="enregistrer(actifForm.value)"
+                [disabled]="!actifForm.valid">
+          <i class="bi bi-check-lg me-1"></i>
+          {{ modeEdition ? 'Appliquer les changements' : 'Enregistrer l\'actif' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

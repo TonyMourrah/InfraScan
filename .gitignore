@@ -1,0 +1,9 @@
+# Fichiers de build .NET
+**/bin/
+**/obj/
+.vs/
+
+# Fichiers de dépendances Angular
+**/node_modules/
+**/dist/
+.angular/

@@ -1,0 +1,6 @@
+@InfraScan_HostAddress = http://localhost:5137
+
+GET {{InfraScan_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
