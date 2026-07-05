@@ -15,6 +15,7 @@ export class ActifDetailComponent implements OnInit {
   loading: boolean = true;
   errorMessage: string = '';
 
+  
   constructor(
     private route: ActivatedRoute,       
     private actifService: ActifService  
