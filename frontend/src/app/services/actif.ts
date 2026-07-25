@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environment'; 
 
 export interface ActifRoutier {
-  id?: number;
+   id?: number;
   nom: string;
   type: string;
   ville: string;
@@ -12,6 +12,10 @@ export interface ActifRoutier {
   longitude: number;
   etatSante: number;
   derniereInspection: string;
+  creePar?: string;
+  dateCreation?: string;
+  modifiePar?: string;
+  dateModification?: string;
 }
 
 @Injectable({

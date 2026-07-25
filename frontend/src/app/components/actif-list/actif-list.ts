@@ -119,41 +119,30 @@ export class ActifListComponent implements OnInit {
     });
   }
 
- enregistrer(formValue: any): void {
-    if (!this.actifForm.valid) return;
+enregistrer(formValue: any): void {
+  if (!this.actifForm.valid) return;
 
-    const payload: any = {
-      Nom: formValue.nom,
-      Type: formValue.type,
-      Ville: formValue.ville || 'Laval',
-      EtatSante: Number(formValue.etatSante) || 0,
-      DerniereInspection: formValue.derniereInspection,
-      Latitude: Number(formValue.latitude) || 45.56,
-      Longitude: Number(formValue.longitude) || -73.71
-    };
+  const payload: any = {
+    Nom: formValue.nom,
+    Type: formValue.type,
+    Ville: formValue.ville || 'Laval',
+    EtatSante: Number(formValue.etatSante) || 0,
+    DerniereInspection: formValue.derniereInspection,
+    Latitude: Number(formValue.latitude) || 45.56,
+    Longitude: Number(formValue.longitude) || -73.71
+  };
 
-    if (this.modeEdition && this.idEnEdition) {
-      payload.Id = this.idEnEdition;
-      this.actifService.putActif(this.idEnEdition, payload).subscribe({
-        next: () => { 
-          this.chargerActifs(); 
-          this.fermerModal(); 
-        },
-        error: (err) => console.error('Erreur lors de la modification:', err)
-      });
-    } else {
-      this.actifService.postActif(payload).subscribe({
-        next: () => { 
-          this.chargerActifs(); 
-          this.fermerModal(); 
-        },
-        error: (err) => {
-          alert("Erreur lors de l'ajout.");
-          console.error("Détails de l'erreur POST:", err);
-        }
-      });
-    }
+  if (this.modeEdition && this.idEnEdition) {
+    payload.Id = this.idEnEdition;
+    payload.ModifiePar = this.username;   // ← ajouté
+
+    this.actifService.putActif(this.idEnEdition, payload).subscribe({ /* ... */ });
+  } else {
+    payload.CreePar = this.username;      // ← ajouté
+
+    this.actifService.postActif(payload).subscribe({ /* ... */ });
   }
+}
 
   supprimer(id: number, nom: string): void {
     if (confirm(`Es-tu sûr de vouloir supprimer l'actif : ${nom} ?`)) {

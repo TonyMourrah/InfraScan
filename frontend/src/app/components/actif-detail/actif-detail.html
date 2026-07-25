@@ -1,21 +1,26 @@
 <div class="container mt-5">
+  <!-- Bouton Retour -->
   <div class="mb-4">
     <a routerLink="/actifs" class="btn btn-outline-secondary">
       <i class="bi bi-arrow-left me-2"></i>Retour au tableau de bord
     </a>
   </div>
 
+  <!-- Indicator de Chargement -->
   <div *ngIf="loading" class="text-center py-5">
     <div class="spinner-border text-primary" role="status"></div>
     <p class="text-muted mt-2">Chargement des données de l'infrastructure...</p>
   </div>
 
+  <!-- Message d'Erreur -->
   <div *ngIf="errorMessage" class="alert alert-danger shadow-sm" role="alert">
     <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ errorMessage }}
   </div>
 
+  <!-- Contenu Principal -->
   <div *ngIf="!loading && !errorMessage && actif" class="row g-4">
     
+    <!-- Colonne Gauche : Informations de l'actif -->
     <div class="col-md-5">
       <div class="card shadow-sm border-0 h-100">
         <div class="card-body p-4">
@@ -42,6 +47,7 @@
       </div>
     </div>
 
+    <!-- Colonne Droite : Évaluation de la structure -->
     <div class="col-md-7">
       <div class="card shadow-sm border-0 p-4 h-100">
         <h4 class="fw-bold mb-4">Évaluation de la structure</h4>
@@ -73,6 +79,37 @@
           </p>
         </div>
 
+      </div>
+    </div>
+
+    <!-- Section Traçabilité (Pleine largeur) -->
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+          <h6 class="fw-bold text-uppercase text-muted mb-3">
+            <i class="bi bi-clock-history me-2"></i>Traçabilité
+          </h6>
+
+          <div class="d-flex justify-content-between mb-2 pb-2 border-bottom">
+            <span class="small text-muted">Créé par</span>
+            <span class="fw-bold small">
+              {{ actif.creePar || 'Inconnu' }}
+              <span class="text-muted fw-normal" *ngIf="actif.dateCreation">
+                — {{ actif.dateCreation | date:'dd/MM/yyyy HH:mm' }}
+              </span>
+            </span>
+          </div>
+
+          <div *ngIf="actif.modifiePar" class="d-flex justify-content-between">
+            <span class="small text-muted">Modifié par</span>
+            <span class="fw-bold small">
+              {{ actif.modifiePar }}
+              <span class="text-muted fw-normal" *ngIf="actif.dateModification">
+                — {{ actif.dateModification | date:'dd/MM/yyyy HH:mm' }}
+              </span>
+            </span>
+          </div>
+        </div>
       </div>
     </div>
 
