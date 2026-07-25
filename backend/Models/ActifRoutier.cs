@@ -10,5 +10,9 @@
         public double Longitude { get; set; }
         public int EtatSante { get; set; } // Score de 1 à 100
         public DateTime DerniereInspection { get; set; }
+        public string? CreePar { get; set; }
+        public DateTime DateCreation { get; set; } = DateTime.UtcNow;
+        public string? ModifiePar { get; set; }
+        public DateTime? DateModification { get; set; }
     }
 }

@@ -12,4 +12,4 @@ namespace InfraScan.Data
 
         public DbSet<Utilisateur> Utilisateurs { get; set; }
     }
-}
+}   
