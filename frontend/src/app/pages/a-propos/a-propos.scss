@@ -1,0 +1,31 @@
+.avatar-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  i {
+    font-size: 3.5rem;
+    color: white;
+  }
+}
+
+.tech-badge {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #495057;
+  height: 100%;
+  display: flex;
+  align-items: center;
+
+  i {
+    color: #0d6efd;
+  }
+}
