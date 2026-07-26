@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-a-propos',
@@ -9,7 +10,13 @@ import { RouterModule } from '@angular/router';
   templateUrl: './a-propos.html',
   styleUrl: './a-propos.scss'
 })
+
 export class AProposComponent {
+    private authService = inject(AuthService);
+
+  get estConnecte(): boolean {
+    return this.authService.isLoggedIn();
+  }
   nomComplet = 'Tony Mourrah';
   titre = 'Étudiant en génie logiciel — ÉTS';
   githubUrl = 'https://github.com/TonyMourrah';
