@@ -220,7 +220,26 @@
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label fw-bold small">Ville</label>
-              <input type="text" class="form-control" name="ville" ngModel required />
+              <div class="input-group">
+                <input type="text" class="form-control" name="ville" ngModel required />
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="localiserActif()"
+                  [disabled]="isGeocoding"
+                  title="Localiser cet actif sur la carte"
+                >
+                  <span *ngIf="isGeocoding" class="spinner-border spinner-border-sm"></span>
+                  <i *ngIf="!isGeocoding" class="bi bi-geo-alt"></i>
+                </button>
+              </div>
+              <div
+                *ngIf="geocodeMessage"
+                class="form-text"
+                [ngClass]="geocodeMessageType === 'success' ? 'text-success' : 'text-warning'"
+              >
+                {{ geocodeMessage }}
+              </div>
             </div>
           </div>
           <div class="mb-3">
@@ -230,10 +249,8 @@
           <div class="mb-3">
             <label class="form-label fw-bold small d-flex justify-content-between">
               État de santé
-              <!-- ← on lit la valeur avec || 0 pour ne jamais afficher undefined -->
               <span>{{ actifForm.value.etatSante || 0 }}%</span>
             </label>
-            <!-- ← ngModel="75" force une valeur initiale sur le slider -->
             <input
               type="range"
               class="form-range"

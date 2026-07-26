@@ -3,7 +3,11 @@ import { CommonModule, NgClass } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActifService } from '../../services/actif';
 import { AuthService } from '../../services/auth';
+import { GeocodingService } from '../../services/geocoding';
 import { RouterModule } from '@angular/router';
+
+// Coordonnées par défaut si toute géolocalisation échoue (centre  du Québec)
+const COORDS_PAR_DEFAUT = { lat: 46.8139, lng: -71.2080 };
 
 @Component({
   selector: 'app-actif-list',
@@ -20,14 +24,20 @@ export class ActifListComponent implements OnInit {
   idEnEdition: number | null = null;
   private authService = inject(AuthService);
 
-  // ← Nouveaux indicateurs de chargement
   isLoadingListe: boolean = true;
   isSaving: boolean = false;
   isDeletingId: number | null = null;
 
+  isGeocoding: boolean = false;
+  geocodeMessage: string = '';
+  geocodeMessageType: 'success' | 'warning' | '' = '';
+
   @ViewChild('actifForm') actifForm!: NgForm;
 
-  constructor(private actifService: ActifService) {}
+  constructor(
+    private actifService: ActifService,
+    private geocodingService: GeocodingService
+  ) {}
 
   ngOnInit(): void {
     this.chargerActifs();
@@ -52,7 +62,6 @@ export class ActifListComponent implements OnInit {
   get filteredActifs() {
     let result = [...this.actifs];
 
-    // 1. TRI
     if (this.sortOrder === 'critical') {
       result.sort((a, b) => {
         const scoreA = a.etatSante ?? a.EtatSante ?? 100;
@@ -67,7 +76,6 @@ export class ActifListComponent implements OnInit {
       });
     }
 
-    // 2. RECHERCHE / FILTRE
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
       result = result.filter(a => {
@@ -81,7 +89,6 @@ export class ActifListComponent implements OnInit {
     return result;
   }
 
-  // STATISTIQUES
   get totalActifs(): number { return this.actifs.length; }
 
   get moyenneSante(): number {
@@ -100,10 +107,11 @@ export class ActifListComponent implements OnInit {
     return { texte: 'OPTIMAL', classe: 'bg-success' };
   }
 
-  // ACTIONS
   preparerAjout(): void {
     this.modeEdition = false;
     this.idEnEdition = null;
+    this.geocodeMessage = '';
+    this.geocodeMessageType = '';
     this.actifForm.resetForm();
     setTimeout(() => {
       this.actifForm.form.patchValue({
@@ -120,6 +128,8 @@ export class ActifListComponent implements OnInit {
   preparerModification(actif: any): void {
     this.modeEdition = true;
     this.idEnEdition = actif.id;
+    this.geocodeMessage = '';
+    this.geocodeMessageType = '';
     this.actifForm.form.patchValue({
       nom: actif.nom,
       type: actif.type,
@@ -131,9 +141,88 @@ export class ActifListComponent implements OnInit {
     });
   }
 
+
+  localiserActif(): void {
+    const nom = (this.actifForm.value.nom || '').trim();
+    const ville = (this.actifForm.value.ville || '').trim();
+
+    if (!ville || ville.length < 2) {
+      this.geocodeMessage = "Entre au moins une ville avant de localiser.";
+      this.geocodeMessageType = 'warning';
+      return;
+    }
+
+    this.isGeocoding = true;
+    this.geocodeMessage = '';
+
+    const requetePrecise = nom ? `${nom}, ${ville}` : ville;
+
+    this.geocodingService.rechercherAdresse(requetePrecise).subscribe({
+      next: (resultats) => {
+        if (resultats.length > 0) {
+          this.appliquerCoordonnees(resultats[0].lat, resultats[0].lon,
+            `Position précise trouvée pour "${nom || ville}".`, 'success');
+          return;
+        }
+        // Rien trouvé avec le nom précis → on retente avec la ville seule
+        if (nom) {
+          this.tenterAvecVilleSeule(ville);
+        } else {
+          this.appliquerCoordonneesParDefaut(`"${ville}" introuvable — position approximative appliquée.`);
+        }
+      },
+      error: () => {
+        if (nom) {
+          this.tenterAvecVilleSeule(ville);
+        } else {
+          this.appliquerCoordonneesParDefaut("Erreur de recherche — position approximative appliquée.");
+        }
+      }
+    });
+  }
+
+  private tenterAvecVilleSeule(ville: string): void {
+    this.geocodingService.rechercherAdresse(ville).subscribe({
+      next: (resultats) => {
+        if (resultats.length > 0) {
+          this.appliquerCoordonnees(resultats[0].lat, resultats[0].lon,
+            `Adresse précise introuvable — position de "${ville}" appliquée.`, 'warning');
+        } else {
+          this.appliquerCoordonneesParDefaut(`"${ville}" introuvable — position approximative appliquée.`);
+        }
+      },
+      error: () => {
+        this.appliquerCoordonneesParDefaut("Erreur de recherche — position approximative appliquée.");
+      }
+    });
+  }
+
+  private appliquerCoordonnees(lat: string, lon: string, message: string, type: 'success' | 'warning'): void {
+    this.isGeocoding = false;
+    this.actifForm.form.patchValue({
+      latitude: parseFloat(lat),
+      longitude: parseFloat(lon)
+    });
+    this.geocodeMessage = message;
+    this.geocodeMessageType = type;
+  }
+
+  private appliquerCoordonneesParDefaut(message: string): void {
+    this.isGeocoding = false;
+    this.actifForm.form.patchValue({
+      latitude: COORDS_PAR_DEFAUT.lat,
+      longitude: COORDS_PAR_DEFAUT.lng
+    });
+    this.geocodeMessage = message;
+    this.geocodeMessageType = 'warning';
+  }
+
   enregistrer(formValue: any): void {
-    if (!this.actifForm.valid || this.isSaving) return;   // ← bloque double-clic
+    if (!this.actifForm.valid || this.isSaving) return;
     this.isSaving = true;
+
+    const latitude = Number(formValue.latitude) || COORDS_PAR_DEFAUT.lat;
+    const longitude = Number(formValue.longitude) || COORDS_PAR_DEFAUT.lng;
 
     const payload: any = {
       Nom: formValue.nom,
@@ -141,8 +230,8 @@ export class ActifListComponent implements OnInit {
       Ville: formValue.ville || 'Laval',
       EtatSante: Number(formValue.etatSante) || 0,
       DerniereInspection: formValue.derniereInspection,
-      Latitude: Number(formValue.latitude) || 45.56,
-      Longitude: Number(formValue.longitude) || -73.71
+      Latitude: latitude,
+      Longitude: longitude
     };
 
     if (this.modeEdition && this.idEnEdition) {
@@ -180,7 +269,7 @@ export class ActifListComponent implements OnInit {
   }
 
   supprimer(id: number, nom: string): void {
-    if (this.isDeletingId !== null) return;   // ← bloque double-clic
+    if (this.isDeletingId !== null) return;
 
     if (confirm(`Es-tu sûr de vouloir supprimer l'actif : ${nom} ?`)) {
       this.isDeletingId = id;
