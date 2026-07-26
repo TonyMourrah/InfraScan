@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ActifService, ActifRoutier } from '../../services/actif';
@@ -11,7 +11,7 @@ import * as L from 'leaflet';
   templateUrl: './actif-detail.html',
   styleUrls: ['./actif-detail.scss']
 })
-export class ActifDetailComponent implements OnInit, AfterViewInit {
+export class ActifDetailComponent implements OnInit {
   actif: ActifRoutier | null = null;
   loading: boolean = true;
   errorMessage: string = '';
@@ -19,7 +19,8 @@ export class ActifDetailComponent implements OnInit, AfterViewInit {
 
   constructor(
     private route: ActivatedRoute,
-    private actifService: ActifService
+    private actifService: ActifService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -30,8 +31,8 @@ export class ActifDetailComponent implements OnInit, AfterViewInit {
         next: (data) => {
           this.actif = data;
           this.loading = false;
-          // On attend que le DOM soit prêt avant d'initialiser la carte
-          setTimeout(() => this.initMap(), 0);
+          this.cdr.detectChanges();
+          setTimeout(() => this.initMap(), 50);
         },
         error: (err) => {
           this.errorMessage = "Impossible de charger les détails de cet actif.";
@@ -42,10 +43,14 @@ export class ActifDetailComponent implements OnInit, AfterViewInit {
     }
   }
 
-  ngAfterViewInit(): void {}
-
   private initMap(): void {
     if (!this.actif || !this.actif.latitude || !this.actif.longitude) return;
+
+    const container = document.getElementById('mapActif');
+    if (!container) {
+      console.error('Conteneur de carte introuvable dans le DOM.');
+      return;
+    }
 
     const lat = this.actif.latitude;
     const lng = this.actif.longitude;
@@ -71,5 +76,7 @@ export class ActifDetailComponent implements OnInit, AfterViewInit {
       .addTo(this.map)
       .bindPopup(`<strong>${this.actif.nom}</strong><br>${this.actif.ville}`)
       .openPopup();
+
+    setTimeout(() => this.map?.invalidateSize(), 100);
   }
 }
