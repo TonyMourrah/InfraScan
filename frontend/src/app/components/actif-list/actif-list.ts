@@ -20,6 +20,11 @@ export class ActifListComponent implements OnInit {
   idEnEdition: number | null = null;
   private authService = inject(AuthService);
 
+  // ← Nouveaux indicateurs de chargement
+  isLoadingListe: boolean = true;
+  isSaving: boolean = false;
+  isDeletingId: number | null = null;
+
   @ViewChild('actifForm') actifForm!: NgForm;
 
   constructor(private actifService: ActifService) {}
@@ -31,9 +36,16 @@ export class ActifListComponent implements OnInit {
   username = this.authService.getUsername();
 
   chargerActifs() {
+    this.isLoadingListe = true;
     this.actifService.getActifs().subscribe({
-      next: (donnees) => { this.actifs = donnees; },
-      error: (err) => console.error('Erreur lors du chargement', err)
+      next: (donnees) => {
+        this.actifs = donnees;
+        this.isLoadingListe = false;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement', err);
+        this.isLoadingListe = false;
+      }
     });
   }
 
@@ -100,7 +112,7 @@ export class ActifListComponent implements OnInit {
         latitude: 45.56,
         longitude: -73.71,
         derniereInspection: new Date().toISOString().split('T')[0],
-        etatSante: 75  // ← valeur initiale pour éviter NaN sur le slider
+        etatSante: 75
       });
     });
   }
@@ -119,36 +131,68 @@ export class ActifListComponent implements OnInit {
     });
   }
 
-enregistrer(formValue: any): void {
-  if (!this.actifForm.valid) return;
+  enregistrer(formValue: any): void {
+    if (!this.actifForm.valid || this.isSaving) return;   // ← bloque double-clic
+    this.isSaving = true;
 
-  const payload: any = {
-    Nom: formValue.nom,
-    Type: formValue.type,
-    Ville: formValue.ville || 'Laval',
-    EtatSante: Number(formValue.etatSante) || 0,
-    DerniereInspection: formValue.derniereInspection,
-    Latitude: Number(formValue.latitude) || 45.56,
-    Longitude: Number(formValue.longitude) || -73.71
-  };
+    const payload: any = {
+      Nom: formValue.nom,
+      Type: formValue.type,
+      Ville: formValue.ville || 'Laval',
+      EtatSante: Number(formValue.etatSante) || 0,
+      DerniereInspection: formValue.derniereInspection,
+      Latitude: Number(formValue.latitude) || 45.56,
+      Longitude: Number(formValue.longitude) || -73.71
+    };
 
-  if (this.modeEdition && this.idEnEdition) {
-    payload.Id = this.idEnEdition;
-    payload.ModifiePar = this.username;   // ← ajouté
+    if (this.modeEdition && this.idEnEdition) {
+      payload.Id = this.idEnEdition;
+      payload.ModifiePar = this.username;
 
-    this.actifService.putActif(this.idEnEdition, payload).subscribe({ /* ... */ });
-  } else {
-    payload.CreePar = this.username;      // ← ajouté
+      this.actifService.putActif(this.idEnEdition, payload).subscribe({
+        next: () => {
+          this.chargerActifs();
+          this.fermerModal();
+          this.isSaving = false;
+        },
+        error: (err) => {
+          alert("Erreur lors de la modification.");
+          console.error('Erreur lors de la modification:', err);
+          this.isSaving = false;
+        }
+      });
+    } else {
+      payload.CreePar = this.username;
 
-    this.actifService.postActif(payload).subscribe({ /* ... */ });
+      this.actifService.postActif(payload).subscribe({
+        next: () => {
+          this.chargerActifs();
+          this.fermerModal();
+          this.isSaving = false;
+        },
+        error: (err) => {
+          alert("Erreur lors de l'ajout.");
+          console.error("Détails de l'erreur POST:", err);
+          this.isSaving = false;
+        }
+      });
+    }
   }
-}
 
   supprimer(id: number, nom: string): void {
+    if (this.isDeletingId !== null) return;   // ← bloque double-clic
+
     if (confirm(`Es-tu sûr de vouloir supprimer l'actif : ${nom} ?`)) {
+      this.isDeletingId = id;
       this.actifService.deleteActif(id).subscribe({
-        next: () => { this.actifs = this.actifs.filter(a => a.id !== id); },
-        error: () => alert('Erreur lors de la suppression.')
+        next: () => {
+          this.actifs = this.actifs.filter(a => a.id !== id);
+          this.isDeletingId = null;
+        },
+        error: () => {
+          alert('Erreur lors de la suppression.');
+          this.isDeletingId = null;
+        }
       });
     }
   }

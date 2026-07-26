@@ -42,10 +42,12 @@
         <span class="small fw-bold">EXPORTER</span>
       </button>
 
-      <button class="btn btn-primary shadow h-100 flex-grow-1 py-3 fw-bold"
-              (click)="preparerAjout()"
-              data-bs-toggle="modal"
-              data-bs-target="#modalAjout">
+      <button
+        class="btn btn-primary shadow h-100 flex-grow-1 py-3 fw-bold"
+        (click)="preparerAjout()"
+        data-bs-toggle="modal"
+        data-bs-target="#modalAjout"
+      >
         <i class="bi bi-plus-circle me-2"></i> NOUVEL ACTIF
       </button>
     </div>
@@ -56,11 +58,15 @@
       <div class="row g-2 align-items-center">
         <div class="col-md-8">
           <div class="input-group">
-            <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span>
-            <input type="text"
-                   class="form-control border-0 shadow-none"
-                   placeholder="Rechercher un pont, une ville..."
-                   [(ngModel)]="searchTerm">
+            <span class="input-group-text bg-white border-0"
+              ><i class="bi bi-search text-muted"></i
+            ></span>
+            <input
+              type="text"
+              class="form-control border-0 shadow-none"
+              placeholder="Rechercher un pont, une ville..."
+              [(ngModel)]="searchTerm"
+            />
           </div>
         </div>
         <div class="col-md-4 border-start">
@@ -87,51 +93,82 @@
             </tr>
           </thead>
           <tbody>
-            @for (item of filteredActifs; track item.id) {
-              <tr class="align-middle">
-                <td class="ps-4 text-muted small">#{{ item.id }}</td>
-                <td>
-                  <a [routerLink]="['/actifs', item.id]" class="fw-bold text-decoration-none text-primary" style="cursor: pointer;">
-                    {{ item.nom }}
-                  </a>
-                  <div class="small text-muted">
-                    <i class="bi bi-geo-alt-fill text-danger small"></i> {{ item.ville }} ({{ item.type }})
-                  </div>
-                </td>
-                <td>
-                  <span class="badge rounded-pill px-3" [ngClass]="getPriorite(item.etatSante).classe">
-                    {{ getPriorite(item.etatSante).texte }}
-                  </span>
-                </td>
-                <td>
-                  <div class="d-flex align-items-center">
-                    <div class="progress flex-grow-1" style="height: 8px; min-width: 100px;">
-                      <div class="progress-bar"
-                           [ngClass]="getPriorite(item.etatSante).classe"
-                           [style.width]="item.etatSante + '%'"></div>
-                    </div>
-                    <span class="ms-3 fw-bold small">{{ item.etatSante }}%</span>
-                  </div>
-                </td>
-                <td class="text-end pe-4">
-                  <button (click)="preparerModification(item)"
-                          class="btn btn-outline-primary btn-sm me-2"
-                          data-bs-toggle="modal"
-                          data-bs-target="#modalAjout">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                  <button (click)="supprimer(item.id, item.nom)" class="btn btn-outline-danger btn-sm">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </td>
-              </tr>
-            } @empty {
+            @if (isLoadingListe) {
               <tr>
                 <td colspan="5" class="text-center py-5">
-                  <i class="bi bi-search text-muted fs-1"></i>
-                  <div class="text-muted mt-2">Aucun actif trouvé.</div>
+                  <div class="spinner-border text-primary" role="status"></div>
+                  <div class="text-muted mt-2">Chargement des actifs...</div>
                 </td>
               </tr>
+            } @else {
+              @for (item of filteredActifs; track item.id) {
+                <tr class="align-middle">
+                  <td class="ps-4 text-muted small">#{{ item.id }}</td>
+                  <td>
+                    <a
+                      [routerLink]="['/actifs', item.id]"
+                      class="fw-bold text-decoration-none text-primary"
+                      style="cursor: pointer"
+                    >
+                      {{ item.nom }}
+                    </a>
+                    <div class="small text-muted">
+                      <i class="bi bi-geo-alt-fill text-danger small"></i> {{ item.ville }} ({{
+                        item.type
+                      }})
+                    </div>
+                  </td>
+                  <td>
+                    <span
+                      class="badge rounded-pill px-3"
+                      [ngClass]="getPriorite(item.etatSante).classe"
+                    >
+                      {{ getPriorite(item.etatSante).texte }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="progress flex-grow-1" style="height: 8px; min-width: 100px">
+                        <div
+                          class="progress-bar"
+                          [ngClass]="getPriorite(item.etatSante).classe"
+                          [style.width]="item.etatSante + '%'"
+                        ></div>
+                      </div>
+                      <span class="ms-3 fw-bold small">{{ item.etatSante }}%</span>
+                    </div>
+                  </td>
+                  <td class="text-end pe-4">
+                    <button
+                      (click)="preparerModification(item)"
+                      class="btn btn-outline-primary btn-sm me-2"
+                      data-bs-toggle="modal"
+                      data-bs-target="#modalAjout"
+                      [disabled]="isDeletingId === item.id"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button
+                      (click)="supprimer(item.id, item.nom)"
+                      class="btn btn-outline-danger btn-sm"
+                      [disabled]="isDeletingId === item.id"
+                    >
+                      <span
+                        *ngIf="isDeletingId === item.id"
+                        class="spinner-border spinner-border-sm"
+                      ></span>
+                      <i *ngIf="isDeletingId !== item.id" class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="text-center py-5">
+                    <i class="bi bi-search text-muted fs-1"></i>
+                    <div class="text-muted mt-2">Aucun actif trouvé.</div>
+                  </td>
+                </tr>
+              }
             }
           </tbody>
         </table>
@@ -144,18 +181,33 @@
 <div class="modal fade" id="modalAjout" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content border-0 shadow">
-      <div class="modal-header" [ngClass]="modeEdition ? 'bg-warning text-dark' : 'bg-primary text-white'">
+      <div
+        class="modal-header"
+        [ngClass]="modeEdition ? 'bg-warning text-dark' : 'bg-primary text-white'"
+      >
         <h5 class="modal-title fw-bold">
           <i class="bi" [ngClass]="modeEdition ? 'bi-pencil-square' : 'bi-plus-circle'"></i>
-          {{ modeEdition ? 'Modifier l\'actif #' + idEnEdition : 'Scanner un nouvel actif' }}
+          {{ modeEdition ? "Modifier l'actif #" + idEnEdition : 'Scanner un nouvel actif' }}
         </h5>
-        <button type="button" class="btn-close" [ngClass]="{'btn-close-white': !modeEdition}" data-bs-dismiss="modal"></button>
+        <button
+          type="button"
+          class="btn-close"
+          [ngClass]="{ 'btn-close-white': !modeEdition }"
+          data-bs-dismiss="modal"
+        ></button>
       </div>
       <div class="modal-body">
         <form #actifForm="ngForm">
           <div class="mb-3">
             <label class="form-label fw-bold small">Nom de l'actif</label>
-            <input type="text" class="form-control" name="nom" ngModel required placeholder="ex: Pont de la Concorde">
+            <input
+              type="text"
+              class="form-control"
+              name="nom"
+              ngModel
+              required
+              placeholder="ex: Pont de la Concorde"
+            />
           </div>
           <div class="row">
             <div class="col-md-6 mb-3">
@@ -168,12 +220,12 @@
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label fw-bold small">Ville</label>
-              <input type="text" class="form-control" name="ville" ngModel required>
+              <input type="text" class="form-control" name="ville" ngModel required />
             </div>
           </div>
           <div class="mb-3">
             <label class="form-label fw-bold small">Date d'inspection</label>
-            <input type="date" class="form-control" name="derniereInspection" ngModel required>
+            <input type="date" class="form-control" name="derniereInspection" ngModel required />
           </div>
           <div class="mb-3">
             <label class="form-label fw-bold small d-flex justify-content-between">
@@ -182,22 +234,39 @@
               <span>{{ actifForm.value.etatSante || 0 }}%</span>
             </label>
             <!-- ← ngModel="75" force une valeur initiale sur le slider -->
-            <input type="range" class="form-range" name="etatSante" ngModel="75" required min="0" max="100">
+            <input
+              type="range"
+              class="form-range"
+              name="etatSante"
+              ngModel="75"
+              required
+              min="0"
+              max="100"
+            />
           </div>
 
-          <input type="hidden" name="latitude" ngModel>
-          <input type="hidden" name="longitude" ngModel>
+          <input type="hidden" name="latitude" ngModel />
+          <input type="hidden" name="longitude" ngModel />
         </form>
       </div>
       <div class="modal-footer bg-light">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-        <button type="button"
-                class="btn"
-                [ngClass]="modeEdition ? 'btn-warning' : 'btn-primary'"
-                (click)="enregistrer(actifForm.value)"
-                [disabled]="!actifForm.valid">
-          <i class="bi bi-check-lg me-1"></i>
-          {{ modeEdition ? 'Appliquer les changements' : 'Enregistrer l\'actif' }}
+        <button
+          type="button"
+          class="btn"
+          [ngClass]="modeEdition ? 'btn-warning' : 'btn-primary'"
+          (click)="enregistrer(actifForm.value)"
+          [disabled]="!actifForm.valid || isSaving"
+        >
+          <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+          <i *ngIf="!isSaving" class="bi bi-check-lg me-1"></i>
+          {{
+            isSaving
+              ? 'Enregistrement...'
+              : modeEdition
+                ? 'Appliquer les changements'
+                : "Enregistrer l'actif"
+          }}
         </button>
       </div>
     </div>
