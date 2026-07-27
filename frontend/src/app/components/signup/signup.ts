@@ -16,17 +16,28 @@ export class SignupComponent {
 
   user = {
     username: '',
-    passwordHash: '', 
+    passwordHash: '',
     role: 'Inspecteur'
   };
 
+  isLoading: boolean = false;
+  erreurMessage: string = '';
+
   onSignup() {
+    if (this.isLoading) return;
+    this.isLoading = true;
+    this.erreurMessage = '';
+
     this.authService.register(this.user).subscribe({
       next: () => {
+        this.isLoading = false;
         alert('Compte créé ! Tu peux maintenant te connecter.');
         this.router.navigate(['/login']);
       },
-      error: (err) => alert(err.error.message)
+      error: (err) => {
+        this.isLoading = false;
+        this.erreurMessage = err.error?.message || "Connexion au serveur en cours de réveil, réessaie dans quelques secondes.";
+      }
     });
   }
 }

@@ -1,40 +1,43 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // TRÈS IMPORTANT
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { AuthService } from '../../services/auth'; // Ajuste le chemin si besoin
+import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink], // On ajoute FormsModule ici
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
 export class LoginComponent {
-
   private authService = inject(AuthService);
-    motDePasse: string = '';
-  identifiant: string = ''; 
+  motDePasse: string = '';
+  identifiant: string = '';
+  isLoading: boolean = false;   
+  erreurMessage: string = '';   
 
-  
- onLogin() {
-  
-  const credentials = { 
-    username: this.identifiant, 
-    password: this.motDePasse 
-  };
+  onLogin() {
+    if (this.isLoading) return;   
+    this.isLoading = true;
+    this.erreurMessage = '';
 
-  
-  this.authService.login(credentials).subscribe({
-    next: (response) => {
-      console.log('Connecté !', response);
-      
-    },
-    error: (err) => {
-      console.error('Erreur de connexion', err);
-      alert('Identifiant ou mot de passe incorrect');
-    }
-  });
-}
+    const credentials = {
+      username: this.identifiant,
+      password: this.motDePasse
+    };
+
+    this.authService.login(credentials).subscribe({
+      next: (response) => {
+        console.log('Connecté !', response);
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Erreur de connexion', err);
+        this.erreurMessage = "Connexion au serveur en cours de réveil, réessaie dans quelques secondes.";
+        this.isLoading = false;
+      }
+    });
+  }
 }
