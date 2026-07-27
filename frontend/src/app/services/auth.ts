@@ -2,22 +2,20 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
-import { environment } from '../../environment'; 
+import { environment } from '../../environment';
 
-@Injectable({ 
-  providedIn: 'root' 
+@Injectable({
+  providedIn: 'root'
 })
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
-  
-  // Utilisation de l'URL Azure présente dans environment.ts
+
   private readonly API_URL = `${environment.apiUrl}/auth`;
 
   login(credentials: any) {
     return this.http.post<any>(`${this.API_URL}/login`, credentials).pipe(
       tap(response => {
-        // On stocke le TOKEN renvoyé par le C#
         localStorage.setItem('token', response.token);
         localStorage.setItem('username', response.username);
         this.router.navigate(['/actifs']);
@@ -36,7 +34,7 @@ export class AuthService {
   logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
-    this.router.navigate(['/']); 
+    this.router.navigate(['/']);
   }
 
   register(user: any) {

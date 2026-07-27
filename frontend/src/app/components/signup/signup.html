@@ -2,7 +2,7 @@
   <a routerLink="/" class="btn btn-outline-light btn-sm position-absolute top-0 start-0 m-3">
     <i class="bi bi-arrow-left me-1"></i> Retour à l'accueil
   </a>
-  <div class="card shadow-lg border-0" style="width: 25rem; border-radius: 15px">
+  <div class="card shadow-lg border-0" style="width: 26rem; border-radius: 15px">
     <div class="card-body p-5">
       <div class="text-center mb-4">
         <i class="bi bi-person-plus text-success display-4"></i>
@@ -18,7 +18,7 @@
             <input
               type="text"
               name="username"
-              [(ngModel)]="user.username"
+              [(ngModel)]="username"
               class="form-control bg-light border-start-0"
               placeholder="User"
               required
@@ -26,22 +26,49 @@
           </div>
         </div>
 
-        <div class="mb-4">
+        <div class="mb-2">
           <label class="form-label small fw-bold text-uppercase">Mot de passe</label>
           <div class="input-group">
             <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock"></i></span>
             <input
-              type="password"
+              [type]="afficherMotDePasse ? 'text' : 'password'"
               name="password"
-              [(ngModel)]="user.passwordHash"
-              class="form-control bg-light border-start-0"
+              [(ngModel)]="password"
+              class="form-control bg-light border-start-0 border-end-0"
               placeholder="••••••••"
               required
             />
+            <button type="button" class="input-group-text bg-light border-start-0" (click)="afficherMotDePasse = !afficherMotDePasse">
+              <i class="bi" [ngClass]="afficherMotDePasse ? 'bi-eye-slash' : 'bi-eye'"></i>
+            </button>
           </div>
         </div>
 
-        <button type="submit" class="btn btn-success w-100 py-2 fw-bold shadow-sm mb-3" [disabled]="isLoading">
+        
+        <div class="mb-4 ps-1">
+          <div class="small" [ngClass]="critereLongueur ? 'text-success' : 'text-muted'">
+            <i class="bi" [ngClass]="critereLongueur ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+            Au moins 8 caractères
+          </div>
+          <div class="small" [ngClass]="critereMajuscule ? 'text-success' : 'text-muted'">
+            <i class="bi" [ngClass]="critereMajuscule ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+            Une majuscule
+          </div>
+          <div class="small" [ngClass]="critereMinuscule ? 'text-success' : 'text-muted'">
+            <i class="bi" [ngClass]="critereMinuscule ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+            Une minuscule
+          </div>
+          <div class="small" [ngClass]="critereChiffre ? 'text-success' : 'text-muted'">
+            <i class="bi" [ngClass]="critereChiffre ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+            Un chiffre
+          </div>
+          <div class="small" [ngClass]="critereSpecial ? 'text-success' : 'text-muted'">
+            <i class="bi" [ngClass]="critereSpecial ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+            Un caractère spécial (!@#$%...)
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-success w-100 py-2 fw-bold shadow-sm mb-3" [disabled]="isLoading || !motDePasseValide">
           <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
           {{ isLoading ? 'Création en cours...' : 'CRÉER MON COMPTE' }}
         </button>

@@ -12,7 +12,10 @@ builder.Services.AddSwaggerGen();
 
 // 3. Configuration de la base de données SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions => sqlOptions.CommandTimeout(180)  
+    ));
 
 // 4.  Active le CORS pour Angular plus tard ( Partage de ressources entre origines multiples - deux local hosts) 
 builder.Services.AddCors(options =>
