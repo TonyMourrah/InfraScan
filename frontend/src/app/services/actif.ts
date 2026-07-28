@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../environment'; 
+import { environment } from '../../environment';
 
 export interface ActifRoutier {
-   id?: number;
+  id?: number;
   nom: string;
   type: string;
   ville: string;
@@ -16,14 +16,14 @@ export interface ActifRoutier {
   dateCreation?: string;
   modifiePar?: string;
   dateModification?: string;
+  imageUrl?: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class ActifService {
-  // Utilisation de l'URL Azure présente dans environment.ts
-  private apiUrl = `${environment.apiUrl}/actifs`; 
+  private apiUrl = `${environment.apiUrl}/actifs`;
 
   constructor(private http: HttpClient) { }
 
@@ -40,11 +40,17 @@ export class ActifService {
   }
 
   postActif(actif: ActifRoutier): Observable<ActifRoutier> {
-    return this.http.post<ActifRoutier>(this.apiUrl, actif); 
+    return this.http.post<ActifRoutier>(this.apiUrl, actif);
   }
 
   putActif(id: number, actif: ActifRoutier): Observable<void> {
-    const payload = { ...actif, id: id }; 
+    const payload = { ...actif, id: id };
     return this.http.put<void>(`${this.apiUrl}/${id}`, payload);
+  }
+
+  uploaderImage(id: number, fichier: File): Observable<{ imageUrl: string }> {
+    const formData = new FormData();
+    formData.append('fichier', fichier);
+    return this.http.post<{ imageUrl: string }>(`${this.apiUrl}/${id}/image`, formData);
   }
 }

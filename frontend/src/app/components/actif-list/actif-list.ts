@@ -6,7 +6,6 @@ import { AuthService } from '../../services/auth';
 import { GeocodingService } from '../../services/geocoding';
 import { RouterModule } from '@angular/router';
 
-// Coordonnées par défaut si toute géolocalisation échoue (centre  du Québec)
 const COORDS_PAR_DEFAUT = { lat: 46.8139, lng: -71.2080 };
 
 @Component({
@@ -26,11 +25,15 @@ export class ActifListComponent implements OnInit {
 
   isLoadingListe: boolean = true;
   isSaving: boolean = false;
+  isUploadingImage: boolean = false;
   isDeletingId: number | null = null;
 
   isGeocoding: boolean = false;
   geocodeMessage: string = '';
   geocodeMessageType: 'success' | 'warning' | '' = '';
+
+  fichierImageSelectionne: File | null = null;
+  apercuImage: string | null = null;
 
   @ViewChild('actifForm') actifForm!: NgForm;
 
@@ -112,6 +115,8 @@ export class ActifListComponent implements OnInit {
     this.idEnEdition = null;
     this.geocodeMessage = '';
     this.geocodeMessageType = '';
+    this.fichierImageSelectionne = null;
+    this.apercuImage = null;
     this.actifForm.resetForm();
     setTimeout(() => {
       this.actifForm.form.patchValue({
@@ -130,6 +135,8 @@ export class ActifListComponent implements OnInit {
     this.idEnEdition = actif.id;
     this.geocodeMessage = '';
     this.geocodeMessageType = '';
+    this.fichierImageSelectionne = null;
+    this.apercuImage = actif.imageUrl || null;
     this.actifForm.form.patchValue({
       nom: actif.nom,
       type: actif.type,
@@ -141,6 +148,30 @@ export class ActifListComponent implements OnInit {
     });
   }
 
+  onFichierSelectionne(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const fichier = input.files[0];
+
+      const typesAcceptes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!typesAcceptes.includes(fichier.type)) {
+        alert('Seuls les fichiers JPG, PNG et WEBP sont acceptés.');
+        return;
+      }
+      if (fichier.size > 5 * 1024 * 1024) {
+        alert("L'image ne doit pas dépasser 5 MB.");
+        return;
+      }
+
+      this.fichierImageSelectionne = fichier;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.apercuImage = reader.result as string;
+      };
+      reader.readAsDataURL(fichier);
+    }
+  }
 
   localiserActif(): void {
     const nom = (this.actifForm.value.nom || '').trim();
@@ -164,7 +195,6 @@ export class ActifListComponent implements OnInit {
             `Position précise trouvée pour "${nom || ville}".`, 'success');
           return;
         }
-        // Rien trouvé avec le nom précis → on retente avec la ville seule
         if (nom) {
           this.tenterAvecVilleSeule(ville);
         } else {
@@ -239,11 +269,7 @@ export class ActifListComponent implements OnInit {
       payload.ModifiePar = this.username;
 
       this.actifService.putActif(this.idEnEdition, payload).subscribe({
-        next: () => {
-          this.chargerActifs();
-          this.fermerModal();
-          this.isSaving = false;
-        },
+        next: () => this.gererImagePuisFinaliser(this.idEnEdition!),
         error: (err) => {
           alert("Erreur lors de la modification.");
           console.error('Erreur lors de la modification:', err);
@@ -254,11 +280,7 @@ export class ActifListComponent implements OnInit {
       payload.CreePar = this.username;
 
       this.actifService.postActif(payload).subscribe({
-        next: () => {
-          this.chargerActifs();
-          this.fermerModal();
-          this.isSaving = false;
-        },
+        next: (nouvelActif) => this.gererImagePuisFinaliser(nouvelActif.id!),
         error: (err) => {
           alert("Erreur lors de l'ajout.");
           console.error("Détails de l'erreur POST:", err);
@@ -266,6 +288,31 @@ export class ActifListComponent implements OnInit {
         }
       });
     }
+  }
+
+  private gererImagePuisFinaliser(actifId: number): void {
+    if (this.fichierImageSelectionne) {
+      this.isUploadingImage = true;
+      this.actifService.uploaderImage(actifId, this.fichierImageSelectionne).subscribe({
+        next: () => this.finaliserEnregistrement(),
+        error: (err) => {
+          console.error("Erreur lors de l'upload de l'image:", err);
+          alert("L'actif a été sauvegardé, mais l'image n'a pas pu être téléversée.");
+          this.finaliserEnregistrement();
+        }
+      });
+    } else {
+      this.finaliserEnregistrement();
+    }
+  }
+
+  private finaliserEnregistrement(): void {
+    this.chargerActifs();
+    this.fermerModal();
+    this.isSaving = false;
+    this.isUploadingImage = false;
+    this.fichierImageSelectionne = null;
+    this.apercuImage = null;
   }
 
   supprimer(id: number, nom: string): void {
