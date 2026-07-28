@@ -1,5 +1,6 @@
 using InfraScan.Data;
 using Microsoft.EntityFrameworkCore;
+using InfraScan.Services; 
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,8 +23,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular",
         policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
-});
-
+})
+;
+builder.Services.AddScoped<BlobService>();
+ 
 var app = builder.Build();
 
 // 5. Configure Swagger pour le mode développement

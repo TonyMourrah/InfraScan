@@ -14,5 +14,6 @@
         public DateTime DateCreation { get; set; } = DateTime.UtcNow;
         public string? ModifiePar { get; set; }
         public DateTime? DateModification { get; set; }
+        public string? ImageUrl { get; set; }
     }
 }
