@@ -11,5 +11,8 @@ namespace InfraScan.Data
         public DbSet<ActifRoutier> Actifs { get; set; }
 
         public DbSet<Utilisateur> Utilisateurs { get; set; }
+
+        
+        public DbSet<ActifHistorique> ActifHistoriques { get; set; } 
     }
 }   

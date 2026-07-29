@@ -19,14 +19,14 @@ public class ActifsController : ControllerBase
         _blobService = blobService;
     }
 
-    // GET: api/actifs (Pour lister tous les ponts/routes)
+    // GET: api/actifs
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ActifRoutier>>> GetActifs()
     {
         return await _context.Actifs.ToListAsync();
     }
 
-    // POST: api/actifs (Pour ajouter un nouvel actif)
+    // POST: api/actifs
     [HttpPost]
     public async Task<ActionResult<ActifRoutier>> PostActif(ActifRoutier actif)
     {
@@ -35,10 +35,22 @@ public class ActifsController : ControllerBase
 
         _context.Actifs.Add(actif);
         await _context.SaveChangesAsync();
+
+        // Première ligne d'historique : la création
+        _context.ActifHistoriques.Add(new ActifHistorique
+        {
+            ActifId = actif.Id,
+            EtatSante = actif.EtatSante,
+            DateEnregistrement = actif.DateCreation,
+            ModifiePar = actif.CreePar ?? "Inconnu",
+            Action = "Création"
+        });
+        await _context.SaveChangesAsync();
+
         return CreatedAtAction(nameof(GetActif), new { id = actif.Id }, actif);
     }
 
-    // GET: api/actifs/5 (Pour récupérer un seul actif par son ID)
+    // GET: api/actifs/5
     [HttpGet("{id}")]
     public async Task<ActionResult<ActifRoutier>> GetActif(int id)
     {
@@ -66,6 +78,10 @@ public class ActifsController : ControllerBase
         {
             await _blobService.SupprimerImageAsync(actif.ImageUrl);
         }
+
+        // Nettoie aussi l'historique associé
+        var historiques = _context.ActifHistoriques.Where(h => h.ActifId == id);
+        _context.ActifHistoriques.RemoveRange(historiques);
 
         _context.Actifs.Remove(actif);
         await _context.SaveChangesAsync();
@@ -100,10 +116,34 @@ public class ActifsController : ControllerBase
         actifExistant.DateModification = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
+
+        // Nouvelle ligne d'historique à chaque modification
+        _context.ActifHistoriques.Add(new ActifHistorique
+        {
+            ActifId = id,
+            EtatSante = actifExistant.EtatSante,
+            DateEnregistrement = actifExistant.DateModification.Value,
+            ModifiePar = actifExistant.ModifiePar ?? "Inconnu",
+            Action = "Modification"
+        });
+        await _context.SaveChangesAsync();
+
         return NoContent();
     }
 
-    // POST: api/actifs/5/image (Upload d'une image pour un actif)
+    // GET: api/actifs/5/historique
+    [HttpGet("{id}/historique")]
+    public async Task<ActionResult<IEnumerable<ActifHistorique>>> GetHistorique(int id)
+    {
+        var historique = await _context.ActifHistoriques
+            .Where(h => h.ActifId == id)
+            .OrderBy(h => h.DateEnregistrement)
+            .ToListAsync();
+
+        return historique;
+    }
+
+    // POST: api/actifs/5/image
     [HttpPost("{id}/image")]
     public async Task<IActionResult> UploaderImage(int id, IFormFile fichier)
     {
