@@ -1,4 +1,5 @@
 ﻿using InfraScan.Data;
+using InfraScan.Helpers;
 using InfraScan.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -31,7 +32,7 @@ namespace InfraScan.Controllers
                 return BadRequest(new { message = "Cet identifiant est déjà utilisé." });
             }
 
-            var erreurMotDePasse = ValiderComplexiteMotDePasse(dto.Password);
+            var erreurMotDePasse = MotDePasseValidator.Valider(dto.Password);
             if (erreurMotDePasse != null)
             {
                 return BadRequest(new { message = erreurMotDePasse });
@@ -87,26 +88,6 @@ namespace InfraScan.Controllers
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        private string? ValiderComplexiteMotDePasse(string password)
-        {
-            if (string.IsNullOrEmpty(password) || password.Length < 8)
-                return "Le mot de passe doit contenir au moins 8 caractères.";
-
-            if (!System.Text.RegularExpressions.Regex.IsMatch(password, @"[A-Z]"))
-                return "Le mot de passe doit contenir au moins une majuscule.";
-
-            if (!System.Text.RegularExpressions.Regex.IsMatch(password, @"[a-z]"))
-                return "Le mot de passe doit contenir au moins une minuscule.";
-
-            if (!System.Text.RegularExpressions.Regex.IsMatch(password, @"[0-9]"))
-                return "Le mot de passe doit contenir au moins un chiffre.";
-
-            if (!System.Text.RegularExpressions.Regex.IsMatch(password, @"[\W_]"))
-                return "Le mot de passe doit contenir au moins un caractère spécial (ex: !@#$%).";
-
-            return null;
         }
     }
 }

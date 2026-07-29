@@ -1,9 +1,16 @@
-# Fichiers de build .NET
+# --- Fichiers de build .NET ---
 **/bin/
 **/obj/
 .vs/
 
-# Fichiers de dépendances Angular
+# --- Configuration & Secrets .NET ---
+appsettings.Development.json
+
+# --- Fichiers de dépendances Angular ---
 **/node_modules/
 **/dist/
 .angular/
+
+# --- IDEs & Editeurs ---
+.vscode/
+*.user
