@@ -3,11 +3,12 @@ using InfraScan.Models;
 using InfraScan.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.AspNetCore.Authorization;
 namespace InfraScan.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize] 
 public class ActifsController : ControllerBase
 {
     private readonly AppDbContext _context;

@@ -1,47 +1,65 @@
 using InfraScan.Data;
+using InfraScan.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using InfraScan.Services; 
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Ajoute les contrôleurs
 builder.Services.AddControllers();
-
-// 2. Ajoute le support Swagger 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 3. Configuration de la base de données SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        sqlOptions => sqlOptions.CommandTimeout(180)  
+        sqlOptions => sqlOptions.CommandTimeout(180)
     ));
 
-// 4.  Active le CORS pour Angular plus tard ( Partage de ressources entre origines multiples - deux local hosts) 
+builder.Services.AddScoped<BlobService>();
+
+
+var jwtSecret = builder.Configuration["Jwt:Secret"]!;
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+    };
+});
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular",
         policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
-})
-;
-builder.Services.AddScoped<BlobService>();
- 
+});
+
 var app = builder.Build();
 
-// 5. Configure Swagger pour le mode développement
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(); // C'est CA qui crée la page web visuelle
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
-
-// 6. Active le CORS
 app.UseCors("AllowAngular");
 
+app.UseAuthentication();  
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();
