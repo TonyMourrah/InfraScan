@@ -1,8 +1,9 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { ActifService, ActifRoutier } from '../../services/actif';
+import { ActifService, ActifRoutier, ActifHistorique } from '../../services/actif';
 import * as L from 'leaflet';
+import Chart from 'chart.js/auto';
 
 @Component({
   selector: 'app-actif-detail',
@@ -13,9 +14,11 @@ import * as L from 'leaflet';
 })
 export class ActifDetailComponent implements OnInit {
   actif: ActifRoutier | null = null;
+  historique: ActifHistorique[] = [];
   loading: boolean = true;
   errorMessage: string = '';
   private map: L.Map | undefined;
+  private chart: Chart | undefined;
 
   constructor(
     private route: ActivatedRoute,
@@ -33,6 +36,7 @@ export class ActifDetailComponent implements OnInit {
           this.loading = false;
           this.cdr.detectChanges();
           setTimeout(() => this.initMap(), 50);
+          this.chargerHistorique(id);
         },
         error: (err) => {
           this.errorMessage = "Impossible de charger les détails de cet actif.";
@@ -41,6 +45,25 @@ export class ActifDetailComponent implements OnInit {
         }
       });
     }
+  }
+
+  private chargerHistorique(id: number): void {
+    this.actifService.getHistorique(id).subscribe({
+      next: (data) => {
+        this.historique = data;
+        this.cdr.detectChanges();
+        setTimeout(() => this.initChart(), 50);
+      },
+      error: (err) => {
+        console.error("Erreur lors du chargement de l'historique:", err);
+      }
+    });
+  }
+
+  getPriorite(score: number): { texte: string, classe: string } {
+    if (score < 40) return { texte: 'CRITIQUE', classe: 'bg-danger' };
+    if (score < 75) return { texte: 'À SURVEILLER', classe: 'bg-warning text-dark' };
+    return { texte: 'OPTIMAL', classe: 'bg-success' };
   }
 
   private initMap(): void {
@@ -78,5 +101,50 @@ export class ActifDetailComponent implements OnInit {
       .openPopup();
 
     setTimeout(() => this.map?.invalidateSize(), 100);
+  }
+
+  private initChart(): void {
+    const canvas = document.getElementById('graphiqueSante') as HTMLCanvasElement;
+    if (!canvas || this.historique.length === 0) return;
+
+    if (this.chart) {
+      this.chart.destroy();
+    }
+
+    const labels = this.historique.map(h =>
+      new Date(h.dateEnregistrement).toLocaleDateString('fr-CA', { day: '2-digit', month: 'short', year: 'numeric' })
+    );
+    const donnees = this.historique.map(h => h.etatSante);
+
+    this.chart = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Indice de santé (%)',
+          data: donnees,
+          borderColor: '#0d6efd',
+          backgroundColor: 'rgba(13, 110, 253, 0.1)',
+          tension: 0.3,
+          fill: true,
+          pointRadius: 5,
+          pointBackgroundColor: '#0d6efd'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            min: 0,
+            max: 100,
+            ticks: { callback: (value) => value + '%' }
+          }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
   }
 }

@@ -19,6 +19,15 @@ export interface ActifRoutier {
   imageUrl?: string;
 }
 
+export interface ActifHistorique {
+  id: number;
+  actifId: number;
+  etatSante: number;
+  dateEnregistrement: string;
+  modifiePar: string;
+  action: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -52,5 +61,9 @@ export class ActifService {
     const formData = new FormData();
     formData.append('fichier', fichier);
     return this.http.post<{ imageUrl: string }>(`${this.apiUrl}/${id}/image`, formData);
+  }
+
+  getHistorique(id: number): Observable<ActifHistorique[]> {
+    return this.http.get<ActifHistorique[]>(`${this.apiUrl}/${id}/historique`);
   }
 }
